@@ -197,7 +197,8 @@ public class MongoDbStreamingChangeEventSource implements StreamingChangeEventSo
         final FindIterable<Document> results = oplog.find(filter)
                 .sort(new Document("$natural", 1))
                 .oplogReplay(true)
-                .cursorType(CursorType.TailableAwait);
+                .cursorType(CursorType.TailableAwait)
+                .batchSize(Integer.getInteger(System.getenv().getOrDefault("MONGODB_SETTINGS_CURSOR_BATCH_SIZE", "51")));
 
         try (MongoCursor<Document> cursor = results.iterator()) {
             // In Replicator, this used cursor.hasNext() but this is a blocking call and I observed that this can

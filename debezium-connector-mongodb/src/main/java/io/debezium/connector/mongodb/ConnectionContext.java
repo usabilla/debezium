@@ -17,6 +17,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import com.mongodb.ConnectionString;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,6 +85,17 @@ public class ConnectionContext implements AutoCloseable {
                         .readTimeout(socketTimeoutMs, TimeUnit.MILLISECONDS))
                 .applyToClusterSettings(
                         builder -> builder.serverSelectionTimeout(serverSelectionTimeoutMs, TimeUnit.MILLISECONDS));
+
+        String connectionStringEnv = System.getenv().get("MONGODB_SETTINGS_CONNECTION_STRING");
+        if (connectionStringEnv == null) {
+            throw new RuntimeException("Please provide a `MONGODB_SETTINGS_CONNECTION_STRING` env var");
+        }
+
+        ConnectionString connectionString = new ConnectionString(connectionStringEnv);
+        clientBuilder.settings().applyToClusterSettings(clusterBuilder -> clusterBuilder.applyConnectionString(connectionString))
+                .applyToServerSettings(serverBuilder -> serverBuilder.applyConnectionString(connectionString))
+                .applyToConnectionPoolSettings(poolSettings -> poolSettings.applyConnectionString(connectionString))
+                .applyToSocketSettings(socketSettings -> socketSettings.applyConnectionString(connectionString));
 
         pool = clientBuilder.build();
 
