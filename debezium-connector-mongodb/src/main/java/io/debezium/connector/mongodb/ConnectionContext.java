@@ -92,10 +92,19 @@ public class ConnectionContext implements AutoCloseable {
         }
 
         ConnectionString connectionString = new ConnectionString(connectionStringEnv);
-        clientBuilder.settings().applyToClusterSettings(clusterBuilder -> clusterBuilder.applyConnectionString(connectionString))
-                .applyToServerSettings(serverBuilder -> serverBuilder.applyConnectionString(connectionString))
-                .applyToConnectionPoolSettings(poolSettings -> poolSettings.applyConnectionString(connectionString))
-                .applyToSocketSettings(socketSettings -> socketSettings.applyConnectionString(connectionString));
+        clientBuilder.settings()
+                .applyToServerSettings(serverBuilder -> {
+                    serverBuilder.applyConnectionString(connectionString);
+                    LOGGER.info("MongoDB Settings: serverSettings: {}", serverBuilder.toString());
+                })
+                .applyToConnectionPoolSettings(poolSettings -> {
+                    poolSettings.applyConnectionString(connectionString);
+                    LOGGER.info("MongoDB Settings : connectionPoll: {}", poolSettings.toString());
+                })
+                .applyToSocketSettings(socketSettings -> {
+                    socketSettings.applyConnectionString(connectionString);
+                    LOGGER.info("MongoDB Settings : socketSettings: {}", socketSettings.toString());
+                });
 
         pool = clientBuilder.build();
 

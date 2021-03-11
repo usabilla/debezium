@@ -5,6 +5,9 @@
  */
 package io.debezium.connector.mongodb;
 
+import com.mongodb.MongoExecutionTimeoutException;
+import com.mongodb.MongoSocketException;
+import com.mongodb.MongoTimeoutException;
 import io.debezium.connector.base.ChangeEventQueue;
 import io.debezium.pipeline.ErrorHandler;
 
@@ -24,10 +27,11 @@ public class MongoDbErrorHandler extends ErrorHandler {
         if (throwable instanceof org.apache.kafka.connect.errors.ConnectException) {
             Throwable cause = throwable.getCause();
             while ((cause != null) && (cause != throwable)) {
-                if (cause instanceof com.mongodb.MongoSocketException) {
+                if (cause instanceof MongoSocketException
+                        || cause instanceof MongoExecutionTimeoutException
+                        || cause instanceof MongoTimeoutException) {
                     return true;
-                }
-                else {
+                } else {
                     cause = cause.getCause();
                 }
             }

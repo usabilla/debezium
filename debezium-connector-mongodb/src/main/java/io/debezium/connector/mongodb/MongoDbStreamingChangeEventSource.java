@@ -194,11 +194,18 @@ public class MongoDbStreamingChangeEventSource implements StreamingChangeEventSo
             filter = Filters.and(filter, operationFilter);
         }
 
+        String batchSizeEnv = System.getenv("MONGODB_SETTINGS_CURSOR_BATCH_SIZE");
+
+        int batchSize = 51;
+        if (batchSizeEnv != null) {
+            batchSize = Integer.parseInt(batchSizeEnv);
+        }
+
         final FindIterable<Document> results = oplog.find(filter)
                 .sort(new Document("$natural", 1))
                 .oplogReplay(true)
                 .cursorType(CursorType.TailableAwait)
-                .batchSize(Integer.getInteger(System.getenv().getOrDefault("MONGODB_SETTINGS_CURSOR_BATCH_SIZE", "51")));
+                .batchSize(batchSize);
 
         try (MongoCursor<Document> cursor = results.iterator()) {
             // In Replicator, this used cursor.hasNext() but this is a blocking call and I observed that this can
